@@ -2,25 +2,20 @@
 
 import * as React from "react"
 import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-} from "@tabler/icons-react"
+  Command,
+  LifeBuoy,
+  Send,
+  Settings2,
+  SquareTerminal,
+  Bot,
+  BookOpen,
+  Frame,
+  PieChart,
+  Map,
+} from "lucide-react"
 
-import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
+import { NavProjects } from "@/components/nav-projects"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -43,35 +38,27 @@ const data = {
     {
       title: "Dashboard",
       url: "#",
-      icon: IconDashboard,
+      icon: SquareTerminal,
+      isActive: true,
+      items: [
+        {
+          title: "Overview",
+          url: "#",
+        },
+        {
+          title: "Analytics",
+          url: "#",
+        },
+        {
+          title: "Reports",
+          url: "#",
+        },
+      ],
     },
     {
       title: "Lifecycle",
       url: "#",
-      icon: IconListDetails,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
+      icon: Bot,
       items: [
         {
           title: "Active Proposals",
@@ -79,36 +66,48 @@ const data = {
         },
         {
           title: "Archived",
+          url: "#",
+        },
+        {
+          title: "Templates",
           url: "#",
         },
       ],
     },
     {
-      title: "Proposal",
-      icon: IconFileDescription,
+      title: "Documents",
       url: "#",
+      icon: BookOpen,
       items: [
         {
-          title: "Active Proposals",
+          title: "Data Library",
           url: "#",
         },
         {
-          title: "Archived",
+          title: "Reports",
+          url: "#",
+        },
+        {
+          title: "Word Assistant",
           url: "#",
         },
       ],
     },
     {
-      title: "Prompts",
-      icon: IconFileAi,
+      title: "Settings",
       url: "#",
+      icon: Settings2,
       items: [
         {
-          title: "Active Proposals",
+          title: "General",
           url: "#",
         },
         {
-          title: "Archived",
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
           url: "#",
         },
       ],
@@ -116,53 +115,53 @@ const data = {
   ],
   navSecondary: [
     {
-      title: "Settings",
+      title: "Support",
       url: "#",
-      icon: IconSettings,
+      icon: LifeBuoy,
     },
     {
-      title: "Get Help",
+      title: "Feedback",
       url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
+      icon: Send,
     },
   ],
-  documents: [
+  projects: [
     {
-      name: "Data Library",
+      name: "Analytics",
       url: "#",
-      icon: IconDatabase,
+      icon: Frame,
     },
     {
-      name: "Reports",
+      name: "Projects",
       url: "#",
-      icon: IconReport,
+      icon: PieChart,
     },
     {
-      name: "Word Assistant",
+      name: "Team",
       url: "#",
-      icon: IconFileWord,
+      icon: Map,
     },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar
+      className="top-0 h-screen!"
+      {...props}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
+            <SidebarMenuButton size="lg" asChild>
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <Command className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">Acme Inc</span>
+                  <span className="truncate text-xs">Enterprise</span>
+                </div>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -170,7 +169,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        <NavProjects projects={data.projects} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

@@ -1,17 +1,23 @@
 import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/components/auth-provider";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="theme-blue-scaled">
+      <body className={`${GeistSans.variable} ${GeistMono.variable} theme-container`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="blue-scaled"
+          defaultTheme="system"
           enableSystem
+          disableTransitionOnChange
         >
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
