@@ -9,13 +9,9 @@ import {
   SquareTerminal,
   Bot,
   BookOpen,
-  Frame,
-  PieChart,
-  Map,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -37,78 +33,67 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/overview",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
           title: "Overview",
-          url: "#",
+          url: "/overview",
         },
         {
           title: "Analytics",
-          url: "#",
+          url: "/analytics",
         },
         {
           title: "Reports",
-          url: "#",
+          url: "/reports",
         },
       ],
     },
     {
-      title: "Lifecycle",
-      url: "#",
+      title: "Inventory",
+      url: "/inventory",
       icon: Bot,
+      isActive: true,
       items: [
         {
-          title: "Active Proposals",
-          url: "#",
+          title: "Assets",
+          url: "/inventory/assets",
         },
         {
-          title: "Archived",
-          url: "#",
-        },
-        {
-          title: "Templates",
-          url: "#",
+          title: "Findings",
+          url: "/inventory/findings",
         },
       ],
     },
     {
-      title: "Documents",
-      url: "#",
+      title: "Reports",
+      url: "/reports",
       icon: BookOpen,
       items: [
         {
-          title: "Data Library",
-          url: "#",
-        },
-        {
-          title: "Reports",
-          url: "#",
-        },
-        {
-          title: "Word Assistant",
-          url: "#",
+          title: "Library",
+          url: "/reports/library",
         },
       ],
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: Settings2,
       items: [
         {
           title: "General",
-          url: "#",
+          url: "/settings/general",
         },
         {
           title: "Team",
-          url: "#",
+          url: "/settings/team",
         },
         {
           title: "Billing",
-          url: "#",
+          url: "/settings/billing",
         },
       ],
     },
@@ -116,30 +101,13 @@ const data = {
   navSecondary: [
     {
       title: "Support",
-      url: "#",
+      url: "/support",
       icon: LifeBuoy,
     },
     {
       title: "Feedback",
-      url: "#",
+      url: "/feedback",
       icon: Send,
-    },
-  ],
-  projects: [
-    {
-      name: "Analytics",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Projects",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Team",
-      url: "#",
-      icon: Map,
     },
   ],
 }
@@ -154,12 +122,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
+              <a href="/overview">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Acme Inc</span>
+                  <span className="truncate font-medium">ad://vantage</span>
                   <span className="truncate text-xs">Enterprise</span>
                 </div>
               </a>
@@ -169,7 +137,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
