@@ -79,6 +79,50 @@ export interface InventoryStats {
   };
 }
 
+export interface AssetTrendsResponse {
+  data: Array<{
+    date: string;
+    domains: number;
+    newDomains: number;
+    apexDomains: number;
+    ips: number;
+    newIps: number;
+    activeIps: number;
+    ports: number;
+    newPorts: number;
+    endpoints: number;
+    newEndpoints: number;
+    httpsEndpoints: number;
+    totalAssets: number;
+    cumulativeDomains: number;
+    cumulativeIps: number;
+    cumulativePorts: number;
+    cumulativeEndpoints: number;
+    cumulativeTotal: number;
+  }>;
+  summary: {
+    period: string;
+    granularity: string;
+    totalDataPoints: number;
+    dateRange: {
+      start: string;
+      end: string;
+    };
+    totals: {
+      domainsDiscovered: number;
+      ipsDiscovered: number;
+      portsDiscovered: number;
+      endpointsDiscovered: number;
+    };
+    currentTotals: {
+      domains: number;
+      ips: number;
+      ports: number;
+      endpoints: number;
+    };
+  };
+}
+
 class ApiClient {
   private baseURL: string;
   private token: string | null = null;
@@ -209,6 +253,20 @@ class ApiClient {
   // Inventory methods
   async getInventoryStats(): Promise<InventoryStats> {
     return this.request<InventoryStats>('/inventory/stats');
+  }
+
+  async getAssetDiscoveryTrends(params: {
+    period?: '7d' | '30d' | '90d';
+    granularity?: 'hourly' | 'daily';
+  } = {}): Promise<AssetTrendsResponse> {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        searchParams.append(key, value);
+      }
+    });
+    
+    return this.request(`/inventory/trends?${searchParams.toString()}`);
   }
 
   async searchAssets(query: string): Promise<{
