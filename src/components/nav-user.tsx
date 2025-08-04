@@ -41,14 +41,23 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const { user: authUser, logout } = useAuth()
+  const { user: authUser, organization, logout } = useAuth()
 
   // Use authenticated user data if available, otherwise fallback to prop
   const displayUser = authUser ? {
-    name: authUser.email.split('@')[0], // Use part before @ as name
+    name: `${authUser.firstName} ${authUser.lastName}`,
     email: authUser.email,
-    avatar: user.avatar, // Keep the same avatar path
+    avatar: user.avatar, // Keep the same avatar path for now
   } : user
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 2)
+  }
 
   return (
     <SidebarMenu>
@@ -62,7 +71,7 @@ export function NavUser({
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={displayUser.avatar} alt={displayUser.name} />
                 <AvatarFallback className="rounded-lg">
-                  {displayUser.name.charAt(0).toUpperCase()}
+                  {getInitials(displayUser.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -83,7 +92,7 @@ export function NavUser({
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={displayUser.avatar} alt={displayUser.name} />
                   <AvatarFallback className="rounded-lg">
-                    {displayUser.name.charAt(0).toUpperCase()}
+                    {getInitials(displayUser.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -93,6 +102,14 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {organization && (
+              <>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  Organization: {organization.name}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />

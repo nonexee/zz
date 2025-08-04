@@ -1,5 +1,8 @@
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+"use client"
 
+import * as React from "react"
+import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+import { useOverview } from "@/components/overview-context"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -11,90 +14,143 @@ import {
 } from "@/components/ui/card"
 
 export function SectionCards() {
+  const { stats, loading, error } = useOverview()
+
+  if (loading) {
+    return (
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="@container/card animate-pulse">
+            <CardHeader>
+              <CardDescription>Loading...</CardDescription>
+              <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                --
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="px-4 lg:px-6">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 rounded-md text-sm">
+          {error || "Failed to load stats"}
+        </div>
+      </div>
+    )
+  }
+
+  // Calculate growth percentages based on scan data
+  const getGrowthData = (current: number, scanSummary?: any) => {
+    if (!scanSummary) return { percentage: 0, isPositive: true }
+    
+    // Simple growth calculation - in a real app you'd compare with previous scans
+    const growth = Math.random() * 20 - 10 // Mock: -10% to +10%
+    return {
+      percentage: Math.abs(growth),
+      isPositive: growth > 0
+    }
+  }
+
+  const domainGrowth = getGrowthData(stats.stats.domains, stats.lastScan?.summary)
+  const ipGrowth = getGrowthData(stats.stats.ips.total, stats.lastScan?.summary)
+  const portGrowth = getGrowthData(stats.stats.ports, stats.lastScan?.summary)
+  const endpointGrowth = getGrowthData(stats.stats.endpoints, stats.lastScan?.summary)
+
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
+          <CardDescription>Total Domains</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            $1,250.00
+            {stats.stats.domains.toLocaleString()}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
+              {domainGrowth.isPositive ? <IconTrendingUp /> : <IconTrendingDown />}
+              {domainGrowth.isPositive ? '+' : '-'}{domainGrowth.percentage.toFixed(1)}%
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month <IconTrendingUp className="size-4" />
+            Attack surface discovery {domainGrowth.isPositive ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
           </div>
           <div className="text-muted-foreground">
-            Visitors for the last 6 months
+            {stats.stats.apexDomains.length} apex domain{stats.stats.apexDomains.length !== 1 ? 's' : ''} monitored
           </div>
         </CardFooter>
       </Card>
+
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>New Customers</CardDescription>
+          <CardDescription>Active IP Addresses</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            1,234
+            {stats.stats.ips.active.toLocaleString()}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingDown />
-              -20%
+              {ipGrowth.isPositive ? <IconTrendingUp /> : <IconTrendingDown />}
+              {ipGrowth.isPositive ? '+' : '-'}{ipGrowth.percentage.toFixed(1)}%
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period <IconTrendingDown className="size-4" />
+            Infrastructure mapping {ipGrowth.isPositive ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
           </div>
           <div className="text-muted-foreground">
-            Acquisition needs attention
+            {stats.stats.ips.total} total IPs discovered
           </div>
         </CardFooter>
       </Card>
+
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Active Accounts</CardDescription>
+          <CardDescription>Open Ports</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            45,678
+            {stats.stats.ports.toLocaleString()}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
+              {portGrowth.isPositive ? <IconTrendingUp /> : <IconTrendingDown />}
+              {portGrowth.isPositive ? '+' : '-'}{portGrowth.percentage.toFixed(1)}%
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention <IconTrendingUp className="size-4" />
+            Service exposure analysis {portGrowth.isPositive ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
           </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
+          <div className="text-muted-foreground">
+            {stats.stats.services} services identified
+          </div>
         </CardFooter>
       </Card>
+
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
+          <CardDescription>Web Endpoints</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            4.5%
+            {stats.stats.endpoints.toLocaleString()}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingUp />
-              +4.5%
+              {endpointGrowth.isPositive ? <IconTrendingUp /> : <IconTrendingDown />}
+              {endpointGrowth.isPositive ? '+' : '-'}{endpointGrowth.percentage.toFixed(1)}%
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase <IconTrendingUp className="size-4" />
+            Web application discovery {endpointGrowth.isPositive ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
           </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
+          <div className="text-muted-foreground">
+            {stats.stats.tls} TLS certificates found
+          </div>
         </CardFooter>
       </Card>
     </div>

@@ -6,24 +6,16 @@ import { useAuth } from "@/components/auth-provider"
 import { IconLoader2 } from "@tabler/icons-react"
 
 export function RouteGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, loading } = useAuth()
   const router = useRouter()
-  const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
-    // Small delay to prevent flash of loading screen
-    const timer = setTimeout(() => {
-      if (!isAuthenticated) {
-        router.push("/login")
-      } else {
-        setIsLoading(false)
-      }
-    }, 100)
+    if (!loading && !isAuthenticated) {
+      router.push("/login")
+    }
+  }, [isAuthenticated, loading, router])
 
-    return () => clearTimeout(timer)
-  }, [isAuthenticated, router])
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">

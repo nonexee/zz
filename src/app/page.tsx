@@ -6,17 +6,19 @@ import { useAuth } from "@/components/auth-provider"
 
 export default function Home() {
   const router = useRouter()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, loading } = useAuth()
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/overview")
-    } else {
-      router.replace("/login")
+    if (!loading) {
+      if (isAuthenticated) {
+        router.replace("/overview")
+      } else {
+        router.replace("/login")
+      }
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, loading, router])
 
-  // Show loading while redirecting
+  // Show loading while redirecting or auth is loading
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="flex flex-col items-center space-y-4">
