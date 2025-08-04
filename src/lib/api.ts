@@ -1,4 +1,4 @@
-// src/lib/api.ts - API client for EASM backend
+// src/lib/api.ts - Enhanced API client for EASM backend
 const API_BASE_URL = '/api'; // Use relative URL - Next.js will proxy to backend
 
 // Types for API responses
@@ -79,9 +79,11 @@ export interface InventoryStats {
   };
 }
 
+// Enhanced asset trends response
 export interface AssetTrendsResponse {
   data: Array<{
     date: string;
+    // Raw daily counts
     domains: number;
     newDomains: number;
     apexDomains: number;
@@ -90,14 +92,26 @@ export interface AssetTrendsResponse {
     activeIps: number;
     ports: number;
     newPorts: number;
+    tcpPorts: number;
+    udpPorts: number;
+    services: number;
+    newServices: number;
     endpoints: number;
     newEndpoints: number;
     httpsEndpoints: number;
+    httpEndpoints: number;
+    certificates: number;
+    newCertificates: number;
+    validCertificates: number;
+    wildcardCertificates: number;
     totalAssets: number;
+    // Cumulative totals
     cumulativeDomains: number;
     cumulativeIps: number;
     cumulativePorts: number;
+    cumulativeServices: number;
     cumulativeEndpoints: number;
+    cumulativeCertificates: number;
     cumulativeTotal: number;
   }>;
   summary: {
@@ -112,13 +126,25 @@ export interface AssetTrendsResponse {
       domainsDiscovered: number;
       ipsDiscovered: number;
       portsDiscovered: number;
+      servicesDiscovered: number;
       endpointsDiscovered: number;
+      certificatesDiscovered: number;
     };
     currentTotals: {
       domains: number;
       ips: number;
       ports: number;
+      services: number;
       endpoints: number;
+      certificates: number;
+    };
+    breakdown: {
+      httpEndpoints: number;
+      httpsEndpoints: number;
+      tcpPorts: number;
+      udpPorts: number;
+      validCertificates: number;
+      wildcardCertificates: number;
     };
   };
 }
