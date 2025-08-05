@@ -32,7 +32,7 @@ import {
   ToggleGroupItem,
 } from "@/components/ui/toggle-group"
 
-export const description = "Comprehensive asset discovery trends over time"
+export const description = "Asset discovery trends starting from first scan"
 
 const chartConfig = {
   // Primary Assets (matches your card colors)
@@ -104,12 +104,48 @@ type ChartData = {
   certificates: number;
 }
 
+type SummaryData = {
+  period: string;
+  granularity: string;
+  totalDataPoints: number;
+  dateRange: {
+    start: string | null;
+    end: string | null;
+  };
+  firstScanDate?: string;
+  totals: {
+    domainsDiscovered: number;
+    ipsDiscovered: number;
+    portsDiscovered: number;
+    servicesDiscovered: number;
+    endpointsDiscovered: number;
+    certificatesDiscovered: number;
+  };
+  currentTotals: {
+    domains: number;
+    ips: number;
+    ports: number;
+    services: number;
+    endpoints: number;
+    certificates: number;
+  };
+  breakdown: {
+    httpEndpoints: number;
+    httpsEndpoints: number;
+    tcpPorts: number;
+    udpPorts: number;
+    validCertificates: number;
+    wildcardCertificates: number;
+  };
+}
+
 export function ChartUnifiedAssetDiscovery() {
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("30d")
   const [viewMode, setViewMode] = React.useState<"cumulative" | "new">("cumulative")
 
   const [chartData, setChartData] = React.useState<ChartData[]>([])
+  const [summary, setSummary] = React.useState<SummaryData | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -130,59 +166,10 @@ export function ChartUnifiedAssetDiscovery() {
         granularity
       })
       
-      // Filter and clean the data
-      const now = new Date()
-      const cleanedData = response.data
-        .filter(item => {
-          const itemDate = new Date(item.date)
-          return itemDate <= now && !isNaN(itemDate.getTime())
-        })
-        .map(item => ({
-          ...item,
-          // Ensure no negative values or NaN
-          cumulativeDomains: Math.max(0, item.cumulativeDomains || 0),
-          cumulativeIps: Math.max(0, item.cumulativeIps || 0),
-          cumulativeEndpoints: Math.max(0, item.cumulativeEndpoints || 0),
-          cumulativePorts: Math.max(0, item.cumulativePorts || 0),
-          cumulativeServices: Math.max(0, item.cumulativeServices || 0),
-          cumulativeCertificates: Math.max(0, item.cumulativeCertificates || 0),
-          domains: Math.max(0, item.domains || 0),
-          ips: Math.max(0, item.ips || 0),
-          endpoints: Math.max(0, item.endpoints || 0),
-          ports: Math.max(0, item.ports || 0),
-          services: Math.max(0, item.services || 0),
-          certificates: Math.max(0, item.certificates || 0)
-        }))
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      // The backend now returns clean data starting from first scan
+      setChartData(response.data)
+      setSummary(response.summary)
       
-      // Ensure cumulative data is truly cumulative (monotonically increasing)
-      let maxDomains = 0
-      let maxIps = 0
-      let maxEndpoints = 0
-      let maxPorts = 0
-      let maxServices = 0
-      let maxCertificates = 0
-      
-      const monotonicData = cleanedData.map(item => {
-        maxDomains = Math.max(maxDomains, item.cumulativeDomains)
-        maxIps = Math.max(maxIps, item.cumulativeIps)
-        maxEndpoints = Math.max(maxEndpoints, item.cumulativeEndpoints)
-        maxPorts = Math.max(maxPorts, item.cumulativePorts)
-        maxServices = Math.max(maxServices, item.cumulativeServices)
-        maxCertificates = Math.max(maxCertificates, item.cumulativeCertificates)
-        
-        return {
-          ...item,
-          cumulativeDomains: maxDomains,
-          cumulativeIps: maxIps,
-          cumulativeEndpoints: maxEndpoints,
-          cumulativePorts: maxPorts,
-          cumulativeServices: maxServices,
-          cumulativeCertificates: maxCertificates
-        }
-      })
-      
-      setChartData(monotonicData)
     } catch (err) {
       console.error("Failed to fetch asset trends:", err)
       setError(err instanceof Error ? err.message : "Failed to load chart data")
@@ -194,32 +181,6 @@ export function ChartUnifiedAssetDiscovery() {
   React.useEffect(() => {
     fetchData()
   }, [fetchData])
-
-  const filteredData = React.useMemo(() => {
-    if (!chartData || chartData.length === 0) return []
-    
-    const now = new Date()
-    let daysToSubtract = 30
-    
-    if (timeRange === "90d") {
-      daysToSubtract = 90
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7
-    }
-    
-    const startDate = new Date(now)
-    startDate.setDate(startDate.getDate() - daysToSubtract)
-    
-    const maxDataPoints = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90
-    
-    return chartData
-      .filter((item) => {
-        const itemDate = new Date(item.date)
-        return itemDate >= startDate && itemDate <= now
-      })
-      .slice(-maxDataPoints)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }, [chartData, timeRange])
 
   const getDataKeys = () => {
     const prefix = viewMode === "cumulative" ? "cumulative" : ""
@@ -242,9 +203,123 @@ export function ChartUnifiedAssetDiscovery() {
   }
 
   const getChartDescription = () => {
-    const period = timeRange === "7d" ? "week" : timeRange === "30d" ? "month" : "3 months"
+    if (!summary) {
+      return "Loading chart data..."
+    }
+
+    if (summary.totalDataPoints === 0) {
+      return "No scan data available yet"
+    }
+
     const view = viewMode === "cumulative" ? "cumulative totals" : "daily discoveries"
-    return `Asset discovery ${view} for the last ${period}`
+    const dataPoints = summary.totalDataPoints
+    const unit = dataPoints === 1 ? "day" : "days"
+    
+    // Show when scanning started if we have that info
+    if (summary.firstScanDate) {
+      const firstScanDate = new Date(summary.firstScanDate)
+      const daysSinceFirstScan = Math.floor((Date.now() - firstScanDate.getTime()) / (24 * 60 * 60 * 1000))
+      return `Asset discovery ${view} over ${dataPoints} ${unit} (scanning started ${daysSinceFirstScan} days ago)`
+    }
+    
+    return `Asset discovery ${view} over ${dataPoints} ${unit}`
+  }
+
+  // Show empty state for no scans
+  if (!loading && summary && summary.totalDataPoints === 0) {
+    return (
+      <Card className="pt-0">
+        <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+          <div className="grid flex-1 gap-1">
+            <CardTitle>Asset Discovery Trends</CardTitle>
+            <CardDescription>No asset discovery data available</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <div className="h-[350px] flex items-center justify-center bg-muted rounded-md">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-2">No scans have been completed yet</p>
+              <p className="text-sm text-muted-foreground">
+                Asset discovery trends will appear here after your first scan
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Show current state for single data point (first scan)
+  if (!loading && summary && summary.totalDataPoints === 1) {
+    const currentData = chartData[0]
+    
+    return (
+      <Card className="pt-0">
+        <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+          <div className="grid flex-1 gap-1">
+            <CardTitle>Assets Discovered in Initial Scan</CardTitle>
+            <CardDescription>
+              {summary.firstScanDate && new Date(summary.firstScanDate).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric"
+              })} - Trends will show after more scans
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+            <div className="flex flex-col items-center p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-l-4 border-l-blue-500">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {currentData.cumulativeDomains}
+              </div>
+              <div className="text-sm text-muted-foreground">Domains</div>
+            </div>
+            
+            <div className="flex flex-col items-center p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border-l-4 border-l-emerald-500">
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                {currentData.cumulativeIps}
+              </div>
+              <div className="text-sm text-muted-foreground">IP Addresses</div>
+            </div>
+            
+            <div className="flex flex-col items-center p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border-l-4 border-l-orange-500">
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                {currentData.cumulativePorts}
+              </div>
+              <div className="text-sm text-muted-foreground">Open Ports</div>
+            </div>
+            
+            <div className="flex flex-col items-center p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border-l-4 border-l-purple-500">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {currentData.cumulativeEndpoints}
+              </div>
+              <div className="text-sm text-muted-foreground">Web Endpoints</div>
+            </div>
+            
+            <div className="flex flex-col items-center p-4 bg-indigo-50 dark:bg-indigo-950/20 rounded-lg border-l-4 border-l-indigo-500">
+              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                {currentData.cumulativeServices}
+              </div>
+              <div className="text-sm text-muted-foreground">Services</div>
+            </div>
+            
+            <div className="flex flex-col items-center p-4 bg-teal-50 dark:bg-teal-950/20 rounded-lg border-l-4 border-l-teal-500">
+              <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+                {currentData.cumulativeCertificates}
+              </div>
+              <div className="text-sm text-muted-foreground">TLS Certificates</div>
+            </div>
+          </div>
+          
+          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+            <p className="text-center text-muted-foreground text-sm">
+              � Initial scan completed! Trends and charts will appear here as you perform more scans over time.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   if (loading) {
@@ -339,7 +414,7 @@ export function ChartUnifiedAssetDiscovery() {
           className="aspect-auto h-[350px] w-full"
         >
           <AreaChart 
-            data={filteredData}
+            data={chartData}
             margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
           >
             <defs>
@@ -420,6 +495,9 @@ export function ChartUnifiedAssetDiscovery() {
                   strokeWidth={2}
                   stackId={viewMode === "cumulative" ? "a" : undefined}
                   connectNulls={false}
+                  // Add dots for better visibility on sparse data
+                  dot={chartData.length <= 5 ? { r: 4 } : false}
+                  activeDot={{ r: 6 }}
                 />
               )
             })}
