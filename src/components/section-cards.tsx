@@ -1,7 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+import { 
+  IconTrendingUp
+} from "@tabler/icons-react"
 import { useOverview } from "@/components/overview-context"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -18,7 +20,7 @@ export function SectionCards() {
 
   if (loading) {
     return (
-      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="@container/card animate-pulse">
             <CardHeader>
@@ -43,113 +45,122 @@ export function SectionCards() {
     )
   }
 
-  // Calculate growth percentages based on scan data
-  const getGrowthData = (current: number, scanSummary?: any) => {
-    if (!scanSummary) return { percentage: 0, isPositive: true }
-    
-    // Simple growth calculation - in a real app you'd compare with previous scans
-    const growth = Math.random() * 20 - 10 // Mock: -10% to +10%
-    return {
-      percentage: Math.abs(growth),
-      isPositive: growth > 0
-    }
+  // Calculate growth data from scan summary
+  const getNewCount = (scanSummary: any, field: string): number => {
+    if (!scanSummary) return 0
+    return scanSummary[field] || 0
   }
 
-  const domainGrowth = getGrowthData(stats.stats.domains, stats.lastScan?.summary)
-  const ipGrowth = getGrowthData(stats.stats.ips.total, stats.lastScan?.summary)
-  const portGrowth = getGrowthData(stats.stats.ports, stats.lastScan?.summary)
-  const endpointGrowth = getGrowthData(stats.stats.endpoints, stats.lastScan?.summary)
+  const newDomains = getNewCount(stats.lastScan?.summary, 'newDomains')
+  const newIps = getNewCount(stats.lastScan?.summary, 'newIps')
+  const newPorts = getNewCount(stats.lastScan?.summary, 'newOpenPorts')
+  const newEndpoints = getNewCount(stats.lastScan?.summary, 'newEndpoints')
+
+  // Format large numbers
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+    return num.toLocaleString()
+  }
 
   return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Total Domains</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.stats.domains.toLocaleString()}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              {domainGrowth.isPositive ? <IconTrendingUp /> : <IconTrendingDown />}
-              {domainGrowth.isPositive ? '+' : '-'}{domainGrowth.percentage.toFixed(1)}%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Attack surface discovery {domainGrowth.isPositive ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
+    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      {/* Domains Card */}
+      <Card className="@container/card border-l-4 border-l-blue-500">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardDescription className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Domains
+            </CardDescription>
+            {newDomains > 0 && (
+              <Badge variant="outline" className="text-xs">
+                <IconTrendingUp className="h-3 w-3" />
+                +{newDomains}
+              </Badge>
+            )}
           </div>
-          <div className="text-muted-foreground">
-            {stats.stats.apexDomains.length} apex domain{stats.stats.apexDomains.length !== 1 ? 's' : ''} monitored
+          <CardTitle className="text-3xl font-bold tabular-nums">
+            {formatNumber(stats.stats.domains)}
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className="pt-2 border-t border-border/50">
+          <div className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{stats.stats.apexDomains.length}</span> apex domain{stats.stats.apexDomains.length !== 1 ? 's' : ''}
           </div>
         </CardFooter>
       </Card>
 
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Active IP Addresses</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.stats.ips.active.toLocaleString()}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              {ipGrowth.isPositive ? <IconTrendingUp /> : <IconTrendingDown />}
-              {ipGrowth.isPositive ? '+' : '-'}{ipGrowth.percentage.toFixed(1)}%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Infrastructure mapping {ipGrowth.isPositive ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
+      {/* IP Addresses Card */}
+      <Card className="@container/card border-l-4 border-l-emerald-500">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardDescription className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              IP Addresses
+            </CardDescription>
+            {newIps > 0 && (
+              <Badge variant="outline" className="text-xs">
+                <IconTrendingUp className="h-3 w-3" />
+                +{newIps}
+              </Badge>
+            )}
           </div>
-          <div className="text-muted-foreground">
-            {stats.stats.ips.total} total IPs discovered
+          <CardTitle className="text-3xl font-bold tabular-nums">
+            {formatNumber(stats.stats.ips.active)}
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className="pt-2 border-t border-border/50">
+          <div className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{Math.round((stats.stats.ips.active / stats.stats.ips.total) * 100)}%</span> active ({stats.stats.ips.total} total)
           </div>
         </CardFooter>
       </Card>
 
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Open Ports</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.stats.ports.toLocaleString()}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              {portGrowth.isPositive ? <IconTrendingUp /> : <IconTrendingDown />}
-              {portGrowth.isPositive ? '+' : '-'}{portGrowth.percentage.toFixed(1)}%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Service exposure analysis {portGrowth.isPositive ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
+      {/* Open Ports Card */}
+      <Card className="@container/card border-l-4 border-l-orange-500">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardDescription className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Open Ports
+            </CardDescription>
+            {newPorts > 0 && (
+              <Badge variant="outline" className="text-xs">
+                <IconTrendingUp className="h-3 w-3" />
+                +{newPorts}
+              </Badge>
+            )}
           </div>
-          <div className="text-muted-foreground">
-            {stats.stats.services} services identified
+          <CardTitle className="text-3xl font-bold tabular-nums">
+            {formatNumber(stats.stats.ports)}
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className="pt-2 border-t border-border/50">
+          <div className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{formatNumber(stats.stats.services)}</span> services running
           </div>
         </CardFooter>
       </Card>
 
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Web Endpoints</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.stats.endpoints.toLocaleString()}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              {endpointGrowth.isPositive ? <IconTrendingUp /> : <IconTrendingDown />}
-              {endpointGrowth.isPositive ? '+' : '-'}{endpointGrowth.percentage.toFixed(1)}%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Web application discovery {endpointGrowth.isPositive ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
+      {/* Web Endpoints Card */}
+      <Card className="@container/card border-l-4 border-l-purple-500">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardDescription className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Web Endpoints
+            </CardDescription>
+            {newEndpoints > 0 && (
+              <Badge variant="outline" className="text-xs">
+                <IconTrendingUp className="h-3 w-3" />
+                +{newEndpoints}
+              </Badge>
+            )}
           </div>
-          <div className="text-muted-foreground">
-            {stats.stats.tls} TLS certificates found
+          <CardTitle className="text-3xl font-bold tabular-nums">
+            {formatNumber(stats.stats.endpoints)}
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className="pt-2 border-t border-border/50">
+          <div className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{stats.stats.endpoints > 0 ? Math.round((stats.stats.tls / stats.stats.endpoints) * 100) : 0}%</span> HTTPS secured
           </div>
         </CardFooter>
       </Card>
