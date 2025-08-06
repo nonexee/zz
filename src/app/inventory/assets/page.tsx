@@ -8,14 +8,6 @@ import { columns } from "@/components/assets-data-table/columns"
 import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 
 import * as React from "react"
 import { apiClient } from "@/lib/api"
@@ -91,46 +83,12 @@ export default function InventoryAssetsPage() {
       <RouteGuard>
         <SidebarProvider>
           <AppSidebar />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
             <SiteHeader />
-            <div className="flex flex-1 flex-col">
-              <div className="@container/main flex flex-1 flex-col gap-2">
-                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                  <div className="px-4 lg:px-6">
-                    <div className="flex flex-col gap-2">
-                      <Breadcrumb>
-                        <BreadcrumbList>
-                          <BreadcrumbItem>
-                            <BreadcrumbLink href="/overview">Dashboard</BreadcrumbLink>
-                          </BreadcrumbItem>
-                          <BreadcrumbSeparator />
-                          <BreadcrumbItem>
-                            <BreadcrumbLink href="/inventory">Inventory</BreadcrumbLink>
-                          </BreadcrumbItem>
-                          <BreadcrumbSeparator />
-                          <BreadcrumbItem>
-                            <BreadcrumbPage>Assets</BreadcrumbPage>
-                          </BreadcrumbItem>
-                        </BreadcrumbList>
-                      </Breadcrumb>
-                      <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Assets</h1>
-                        <p className="text-muted-foreground">
-                          Loading assets...
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="px-4 lg:px-6">
-                    <div className="flex items-center justify-center h-64 bg-muted/50 rounded-lg border">
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        <p className="text-muted-foreground">Loading assets...</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground">Loading assets...</p>
               </div>
             </div>
           </main>
@@ -144,50 +102,18 @@ export default function InventoryAssetsPage() {
       <RouteGuard>
         <SidebarProvider>
           <AppSidebar />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
             <SiteHeader />
-            <div className="flex flex-1 flex-col">
-              <div className="@container/main flex flex-1 flex-col gap-2">
-                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                  <div className="px-4 lg:px-6">
-                    <div className="flex flex-col gap-2">
-                      <Breadcrumb>
-                        <BreadcrumbList>
-                          <BreadcrumbItem>
-                            <BreadcrumbLink href="/overview">Dashboard</BreadcrumbLink>
-                          </BreadcrumbItem>
-                          <BreadcrumbSeparator />
-                          <BreadcrumbItem>
-                            <BreadcrumbLink href="/inventory">Inventory</BreadcrumbLink>
-                          </BreadcrumbItem>
-                          <BreadcrumbSeparator />
-                          <BreadcrumbItem>
-                            <BreadcrumbPage>Assets</BreadcrumbPage>
-                          </BreadcrumbItem>
-                        </BreadcrumbList>
-                      </Breadcrumb>
-                      <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Assets</h1>
-                        <p className="text-muted-foreground">
-                          Failed to load assets
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="px-4 lg:px-6">
-                    <div className="flex items-center justify-center h-64 bg-destructive/10 rounded-lg border border-destructive/20">
-                      <div className="text-center">
-                        <p className="text-destructive mb-2">{error}</p>
-                        <button 
-                          onClick={() => window.location.reload()}
-                          className="text-sm text-primary hover:underline"
-                        >
-                          Try again
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex items-center justify-center h-64 bg-destructive/10 rounded-lg border border-destructive/20 mx-4">
+                <div className="text-center">
+                  <p className="text-destructive mb-2">{error}</p>
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Try again
+                  </button>
                 </div>
               </div>
             </div>
@@ -201,43 +127,12 @@ export default function InventoryAssetsPage() {
     <RouteGuard>
       <SidebarProvider>
         <AppSidebar />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 flex flex-col h-screen overflow-hidden">
           <SiteHeader />
-          <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                {/* Page Header */}
-                <div className="px-4 lg:px-6">
-                  <div className="flex flex-col gap-2">
-                    <Breadcrumb>
-                      <BreadcrumbList>
-                        <BreadcrumbItem>
-                          <BreadcrumbLink href="/overview">Dashboard</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                          <BreadcrumbLink href="/inventory">Inventory</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                          <BreadcrumbPage>Assets</BreadcrumbPage>
-                        </BreadcrumbItem>
-                      </BreadcrumbList>
-                    </Breadcrumb>
-                    <div>
-                      <h1 className="text-2xl font-bold tracking-tight">Assets</h1>
-                      <p className="text-muted-foreground">
-                        View and manage all discovered assets in your attack surface ({assets.length} assets found)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Assets Data Table */}
-                <div className="px-4 lg:px-6">
-                  <DataTable data={assets} columns={columns} />
-                </div>
-              </div>
+          {/* Fixed height container for the table - uses calc to account for header */}
+          <div className="flex-1 p-4 lg:p-6 min-h-0">
+            <div className="h-full">
+              <DataTable data={assets} columns={columns} />
             </div>
           </div>
         </main>

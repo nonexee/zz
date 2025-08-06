@@ -9,7 +9,9 @@ import {
   ExternalLink, 
   Shield, 
   Wifi,
-  MoreHorizontal 
+  MoreHorizontal,
+  Clock,
+  Calendar
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -22,6 +24,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 import { DataTableColumnHeader } from "./data-table-column-header"
 
@@ -55,6 +63,60 @@ interface Asset {
   lastSeen?: string
   relatedIps?: string[]
   openPorts?: number[]
+}
+
+// Helper function to format relative time
+function formatRelativeTime(dateString?: string) {
+  if (!dateString) return { relative: "N/A", absolute: null, isStale: false }
+  
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInMs = now.getTime() - date.getTime()
+  
+  // Calculate different time units
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
+  const diffInWeeks = Math.floor(diffInDays / 7)
+  const diffInMonths = Math.floor(diffInDays / 30)
+  const diffInYears = Math.floor(diffInDays / 365)
+  
+  let relative = ""
+  let isStale = false
+  
+  if (diffInMinutes < 1) {
+    relative = "Just now"
+  } else if (diffInMinutes < 60) {
+    relative = `${diffInMinutes}m ago`
+  } else if (diffInHours < 24) {
+    relative = `${diffInHours}h ago`
+  } else if (diffInDays < 7) {
+    relative = `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`
+    isStale = diffInDays > 2 // Mark as stale after 2 days
+  } else if (diffInWeeks < 4) {
+    relative = `${diffInWeeks} week${diffInWeeks !== 1 ? 's' : ''} ago`
+    isStale = true
+  } else if (diffInMonths < 12) {
+    relative = `${diffInMonths} month${diffInMonths !== 1 ? 's' : ''} ago`
+    isStale = true
+  } else {
+    relative = `${diffInYears} year${diffInYears !== 1 ? 's' : ''} ago`
+    isStale = true
+  }
+  
+  return {
+    relative,
+    absolute: date.toLocaleString("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    }),
+    isStale
+  }
 }
 
 // Row Actions Component
@@ -322,33 +384,50 @@ export const columns: ColumnDef<Asset>[] = [
   {
     accessorKey: "lastSeen",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last Seen" />
+      <DataTableColumnHeader column={column} title="Discovered" />
     ),
     cell: ({ row }) => {
       const lastSeen = row.getValue("lastSeen") as string
-      if (!lastSeen) return <span className="text-muted-foreground">N/A</span>
+      const firstDiscovered = row.original.firstDiscovered as string
       
-      const date = new Date(lastSeen)
-      const now = new Date()
-      const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+      const lastSeenData = formatRelativeTime(lastSeen)
+      const firstDiscoveredData = formatRelativeTime(firstDiscovered)
       
-      let timeAgo = ""
-      if (diffInHours < 1) {
-        timeAgo = "Just now"
-      } else if (diffInHours < 24) {
-        timeAgo = `${diffInHours}h ago`
-      } else {
-        const diffInDays = Math.floor(diffInHours / 24)
-        timeAgo = `${diffInDays}d ago`
-      }
-
       return (
-        <div className="flex flex-col">
-          <span className="text-sm font-medium">{timeAgo}</span>
-          <span className="text-xs text-muted-foreground">
-            {date.toLocaleDateString()}
-          </span>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className={`cursor-help min-w-[100px] ${lastSeenData.isStale ? 'text-orange-600' : 'text-green-600'}`}>
+                <div className="text-sm font-medium underline decoration-dotted">
+                  {lastSeenData.relative}
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent 
+              side="left" 
+              className="bg-card text-card-foreground border-border shadow-lg rounded-xl p-0 max-w-[280px]"
+              sideOffset={8}
+            >
+              <div className="p-4 space-y-3">
+                {/* First seen section */}
+                <div>
+                  <div className="text-sm font-semibold text-foreground mb-1">First seen</div>
+                  <div className="text-sm text-muted-foreground">
+                    {firstDiscoveredData.absolute || "Unknown"}
+                  </div>
+                </div>
+                
+                {/* Last updated section */}
+                <div>
+                  <div className="text-sm font-semibold text-foreground mb-1">Last updated</div>
+                  <div className="text-sm text-muted-foreground">
+                    {lastSeenData.absolute || "Unknown"}
+                  </div>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )
     },
     sortingFn: (rowA, rowB) => {
