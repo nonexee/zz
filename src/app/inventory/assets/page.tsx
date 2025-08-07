@@ -12,6 +12,7 @@ import {
 import * as React from "react"
 import { apiClient } from "@/lib/api"
 
+// Types
 interface Asset {
   id: string
   type: 'domain' | 'ip'
@@ -49,41 +50,165 @@ interface Asset {
   }>
 }
 
+interface PaginationState {
+  pageIndex: number
+  pageSize: number
+}
+
+interface FiltersState {
+  type?: 'domain' | 'ip'
+  status: 'active' | 'inactive' | 'all'
+  search?: string
+}
+
+interface SortingState {
+  id: string
+  desc: boolean
+}[]
+
+// API Response type
+interface AssetsResponse {
+  assets: Asset[]
+  totals: {
+    domains: number
+    ips: number
+    combined: number
+  }
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages: number
+  }
+}
+
 export default function InventoryAssetsPage() {
+  // Core state
   const [assets, setAssets] = React.useState<Asset[]>([])
+  const [totalCount, setTotalCount] = React.useState(0)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  
+  // Table state - this drives the API calls
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10
+  })
+  
+  const [filters, setFilters] = React.useState<FiltersState>({
+    status: 'all'
+  })
+  
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  
+  // Loading states for different operations
+  const [isInitialLoading, setIsInitialLoading] = React.useState(true)
+  const [isPaginationLoading, setIsPaginationLoading] = React.useState(false)
 
-  React.useEffect(() => {
-    const fetchAssets = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        
-        // Fetch a larger dataset for the data table
-        const response = await apiClient.getAssetsList({
-          limit: 100, // Get more assets for better table experience
-          status: 'all' // Include both active and inactive
-        })
-        
-        setAssets(response.assets)
-      } catch (err) {
-        console.error("Failed to fetch assets:", err)
-        setError(err instanceof Error ? err.message : "Failed to load assets")
-      } finally {
-        setLoading(false)
+  // Fetch assets function
+  const fetchAssets = React.useCallback(async (
+    paginationState: PaginationState,
+    filtersState: FiltersState,
+    sortingState: SortingState,
+    isInitial = false
+  ) => {
+    try {
+      // Set appropriate loading state
+      if (isInitial) {
+        setIsInitialLoading(true)
+      } else {
+        setIsPaginationLoading(true)
       }
+      
+      setError(null)
+      
+      // Map frontend state to backend parameters
+      const apiParams = {
+        // Backend uses 1-based pagination, frontend uses 0-based
+        page: paginationState.pageIndex + 1,
+        limit: paginationState.pageSize,
+        type: filtersState.type, // undefined is fine, backend handles it
+        status: filtersState.status
+      }
+      
+      console.log('Fetching assets with params:', apiParams)
+      
+      const response: AssetsResponse = await apiClient.getAssetsList(apiParams)
+      
+      console.log('Assets response:', response)
+      
+      // Update state with response
+      setAssets(response.assets)
+      setTotalCount(response.pagination.total)
+      
+      // Verify pagination state matches response
+      if (response.pagination.page !== paginationState.pageIndex + 1) {
+        console.warn('Pagination mismatch, adjusting...')
+        setPagination(prev => ({
+          ...prev,
+          pageIndex: response.pagination.page - 1
+        }))
+      }
+      
+    } catch (err) {
+      console.error("Failed to fetch assets:", err)
+      setError(err instanceof Error ? err.message : "Failed to load assets")
+      
+      // On error, don't clear existing data unless it's initial load
+      if (isInitial) {
+        setAssets([])
+        setTotalCount(0)
+      }
+    } finally {
+      setIsInitialLoading(false)
+      setIsPaginationLoading(false)
+      setLoading(false)
     }
-
-    fetchAssets()
   }, [])
 
-  if (loading) {
+  // Initial load
+  React.useEffect(() => {
+    fetchAssets(pagination, filters, sorting, true)
+  }, []) // Only run on mount
+
+  // Handle pagination changes
+  const handlePaginationChange = React.useCallback((newPagination: PaginationState) => {
+    console.log('Pagination changed:', newPagination)
+    setPagination(newPagination)
+    fetchAssets(newPagination, filters, sorting, false)
+  }, [filters, sorting, fetchAssets])
+
+  // Handle filter changes
+  const handleFiltersChange = React.useCallback((newFilters: FiltersState) => {
+    console.log('Filters changed:', newFilters)
+    setFilters(newFilters)
+    
+    // Reset to first page when filters change
+    const resetPagination = { ...pagination, pageIndex: 0 }
+    setPagination(resetPagination)
+    
+    fetchAssets(resetPagination, newFilters, sorting, false)
+  }, [pagination, sorting, fetchAssets])
+
+  // Handle sorting changes
+  const handleSortingChange = React.useCallback((newSorting: SortingState) => {
+    console.log('Sorting changed:', newSorting)
+    setSorting(newSorting)
+    fetchAssets(pagination, filters, newSorting, false)
+  }, [pagination, filters, fetchAssets])
+
+  // Retry function
+  const handleRetry = React.useCallback(() => {
+    fetchAssets(pagination, filters, sorting, true)
+  }, [pagination, filters, sorting, fetchAssets])
+
+  // Initial loading state
+  if (isInitialLoading) {
     return (
       <RouteGuard>
         <SidebarProvider>
           <AppSidebar />
-          <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
+          <main className="flex-1 flex flex-col h-screen overflow-hidden">
             <SiteHeader />
             <div className="flex-1 flex items-center justify-center">
               <div className="flex flex-col items-center space-y-4">
@@ -97,20 +222,22 @@ export default function InventoryAssetsPage() {
     )
   }
 
-  if (error) {
+  // Error state
+  if (error && assets.length === 0) {
     return (
       <RouteGuard>
         <SidebarProvider>
           <AppSidebar />
-          <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
+          <main className="flex-1 flex flex-col h-screen overflow-hidden">
             <SiteHeader />
             <div className="flex-1 flex items-center justify-center">
-              <div className="flex items-center justify-center h-64 bg-destructive/10 rounded-lg border border-destructive/20 mx-4">
-                <div className="text-center">
-                  <p className="text-destructive mb-2">{error}</p>
+              <div className="flex items-center justify-center h-64 bg-destructive/10 rounded-lg border border-destructive/20 mx-4 max-w-md">
+                <div className="text-center p-6">
+                  <p className="text-destructive mb-4 font-medium">Failed to load assets</p>
+                  <p className="text-sm text-muted-foreground mb-4">{error}</p>
                   <button 
-                    onClick={() => window.location.reload()}
-                    className="text-sm text-primary hover:underline"
+                    onClick={handleRetry}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                   >
                     Try again
                   </button>
@@ -123,16 +250,34 @@ export default function InventoryAssetsPage() {
     )
   }
 
+  // Main content
   return (
     <RouteGuard>
       <SidebarProvider>
         <AppSidebar />
         <main className="flex-1 flex flex-col h-screen overflow-hidden">
           <SiteHeader />
-          {/* Fixed height container for the table - uses calc to account for header */}
           <div className="flex-1 p-4 lg:p-6 min-h-0">
             <div className="h-full">
-              <DataTable data={assets} columns={columns} />
+              <DataTable 
+                data={assets} 
+                columns={columns}
+                // Pagination props
+                pagination={pagination}
+                onPaginationChange={handlePaginationChange}
+                totalCount={totalCount}
+                // Filter props
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                // Sorting props  
+                sorting={sorting}
+                onSortingChange={handleSortingChange}
+                // Loading state
+                isLoading={isPaginationLoading}
+                // Error state (for non-fatal errors during pagination)
+                error={error}
+                onRetry={handleRetry}
+              />
             </div>
           </div>
         </main>
